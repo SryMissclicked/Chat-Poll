@@ -217,7 +217,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   background:var(--signal-color,var(--signal));
   transition:width .5s cubic-bezier(.2,.8,.2,1);
 }
-.ow-option.leader .ow-bar-fill{background:var(--spark);}
+.ow-option.leader .ow-bar-fill{background:var(--signal-color,var(--signal));}
 .crown{display:inline-block;transform:translateY(-1px);}
 .ow-foot{
   margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
@@ -646,7 +646,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   }
   function crownSvg(size){
     const s = size || 12;
-    return `<svg class="crown" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M3 19h18l-1.5-9-4.5 3.5L12 5 9 13.5 4.5 10 3 19z" fill="currentColor" style="color:var(--spark)"/></svg>`;
+    return `<svg class="crown" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M3 19h18l-1.5-9-4.5 3.5L12 5 9 13.5 4.5 10 3 19z" fill="currentColor" style="color:var(--signal-color,var(--signal))"/></svg>`;
   }
 
   // ---------- twitch IRC (anonymous, read-only, persistent) ----------
