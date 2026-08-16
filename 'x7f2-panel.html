@@ -203,14 +203,18 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   font-family:var(--display-font);font-weight:800;font-size:18px;line-height:1.25;
   margin:0 0 12px 0;color:var(--paper);
 }
-.ow-option{margin-bottom:9px;}
+.ow-option{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+.ow-option:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
 .ow-option-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.ow-option-flat{margin-bottom:0;}
 .ow-option-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
 .ow-cmd{
   font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
   color:var(--ink);background:var(--signal-color,var(--signal));padding:2px 5px;border-radius:4px;
 }
 .ow-pct{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--dim);}
+.ow-pct-big{font-size:18px;font-weight:700;color:var(--dim);}
+.ow-option.leader .ow-pct-big{color:var(--signal-color,var(--signal));}
 .ow-bar-track{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden;}
 .ow-bar-fill{
   height:100%;border-radius:5px;width:0%;
@@ -591,11 +595,10 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
         const isLeader = state.live ? (i===maxIdx && total>0) : false;
         bodyHtml += `
           <div class="ow-option${isLeader?" leader":""}">
-            <div class="ow-option-top">
+            <div class="ow-option-top ow-option-flat">
               <span class="ow-option-label"><span class="ow-cmd">${i+1}</span> ${escapeHtml(opt.label||"Option "+(i+1))} ${isLeader?crownSvg():""}</span>
-              <span class="ow-pct">${pct}%</span>
+              <span class="ow-pct ow-pct-big">${pct}%</span>
             </div>
-            <div class="ow-bar-track"><div class="ow-bar-fill" style="width:${pct}%"></div></div>
           </div>`;
       });
     }
