@@ -362,6 +362,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   if(isOverlayView){
     // Der reine Overlay-Link (f\u00fcr OBS) bleibt immer ungesch\u00fctzt, sonst l\u00e4dt der Stream nicht.
     pinGate.classList.add("hidden");
+    document.body.classList.add("overlay-mode");
   } else {
     const pinInput = document.getElementById("pinInput");
     const pinError = document.getElementById("pinError");
