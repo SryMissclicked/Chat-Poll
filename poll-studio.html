@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Poll Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Bebas+Neue&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+:root{
+  --ink:#0B0E14;
+  --panel:#141924;
+  --panel-2:#1B2130;
+  --line:#232B3A;
+  --paper:#E9EDF3;
+  --dim:#8892A6;
+  --signal:#4EF0C4;
+  --spark:#FF4FA3;
+  --warn:#FFB020;
+  --radius:14px;
+  --display-font:'Space Grotesk',sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+body.overlay-mode{background:transparent;}
+
+/* ---------- layout ---------- */
+#app{height:100vh;display:flex;flex-direction:column;}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 22px;border-bottom:1px solid var(--line);
+  background:var(--panel);flex:0 0 auto;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--signal);
+  box-shadow:0 0 0 0 rgba(78,240,196,.6);animation:pulse 2s infinite;}
+@media (prefers-reduced-motion: reduce){.brand .dot{animation:none;}}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(78,240,196,.5);}
+  70%{box-shadow:0 0 0 8px rgba(78,240,196,0);}
+  100%{box-shadow:0 0 0 0 rgba(78,240,196,0);}
+}
+.brand b{font-family:var(--display-font);font-weight:700;letter-spacing:.02em;font-size:16px;}
+.topbar-actions{display:flex;gap:8px;}
+.btn{
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+  padding:9px 14px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--paper);cursor:pointer;
+  transition:border-color .15s,transform .1s;
+}
+.btn:hover{border-color:var(--signal);}
+.btn:active{transform:scale(.97);}
+.btn.primary{background:var(--signal);color:#08130F;border-color:var(--signal);}
+.btn.danger{background:transparent;border-color:#5A2436;color:#FF7FA8;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.small{padding:6px 10px;font-size:12px;}
+
+.workspace{flex:1;display:flex;min-height:0;}
+.rail{
+  width:340px;flex:0 0 auto;background:var(--panel);
+  border-right:1px solid var(--line);display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.tabs{display:flex;border-bottom:1px solid var(--line);}
+.tab{
+  flex:1;padding:13px;text-align:center;font-size:13px;font-weight:600;
+  color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;
+}
+.tab.active{color:var(--paper);border-color:var(--signal);}
+.rail-panel{padding:18px;display:none;flex-direction:column;gap:16px;}
+.rail-panel.active{display:flex;}
+.field label{
+  display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--dim);margin-bottom:6px;font-weight:600;
+}
+.field input[type=text],.field input[type=number],.field select{
+  width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line);
+  background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--signal);}
+.option-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.option-tag{
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:var(--ink);background:var(--signal);padding:5px 7px;border-radius:6px;
+  flex:0 0 auto;
+}
+.option-row input{flex:1;}
+.option-row .rm{
+  flex:0 0 auto;width:26px;height:26px;border-radius:6px;border:1px solid var(--line);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:14px;
+}
+.option-row .rm:hover{border-color:#FF7FA8;color:#FF7FA8;}
+.hint{font-size:11.5px;color:var(--dim);line-height:1.5;}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;}
+.swatch{
+  width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+}
+.swatch.active{border-color:#fff;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;}
+.switch{position:relative;width:38px;height:22px;flex:0 0 auto;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{
+  position:absolute;inset:0;background:var(--line);border-radius:20px;cursor:pointer;
+  transition:.15s;
+}
+.slider:before{
+  content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;
+  background:var(--paper);border-radius:50%;transition:.15s;
+}
+input:checked + .slider{background:var(--signal);}
+input:checked + .slider:before{transform:translateX(16px);background:#08130F;}
+.rail-footer{
+  margin-top:auto;padding:16px 18px;border-top:1px solid var(--line);
+  display:flex;flex-direction:column;gap:10px;
+}
+.status-line{font-size:12px;color:var(--dim);font-family:'JetBrains Mono',monospace;}
+.status-line b{color:var(--signal);}
+
+.stage{flex:1;display:flex;flex-direction:column;min-width:0;}
+.stage-frame{
+  flex:1;position:relative;display:flex;align-items:flex-end;justify-content:flex-end;
+  padding:32px;
+  background-image:
+    linear-gradient(45deg,#1a1f2b 25%,transparent 25%),
+    linear-gradient(-45deg,#1a1f2b 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#1a1f2b 75%),
+    linear-gradient(-45deg,transparent 75%,#1a1f2b 75%);
+  background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;
+  background-color:#10141d;
+}
+body.overlay-mode .stage-frame{background:transparent;padding:24px;}
+.stage-frame[data-corner="bottom-right"]{align-items:flex-end;justify-content:flex-end;}
+.stage-frame[data-corner="bottom-left"]{align-items:flex-end;justify-content:flex-start;}
+.stage-frame[data-corner="top-right"]{align-items:flex-start;justify-content:flex-end;}
+.stage-frame[data-corner="top-left"]{align-items:flex-start;justify-content:flex-start;}
+.stage-footer{
+  flex:0 0 auto;padding:12px 22px;border-top:1px solid var(--line);
+  background:var(--panel);font-size:12px;color:var(--dim);
+}
+body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-footer{display:none;}
+
+/* ---------- overlay widget ---------- */
+.overlay-widget{
+  width:360px;background:rgba(19,23,33,.92);backdrop-filter:blur(6px);
+  border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;
+  position:relative;overflow:hidden;
+  opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .35s ease;
+}
+.overlay-widget.live{opacity:1;transform:translateY(0);}
+.overlay-widget.glow{box-shadow:0 0 0 1px rgba(78,240,196,.15),0 8px 30px -6px var(--glow-color,rgba(78,240,196,.35));}
+.sweep{
+  position:absolute;top:0;left:-40%;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
+  pointer-events:none;
+}
+.overlay-widget.sweeping .sweep{animation:sweep .9s ease-out;}
+@keyframes sweep{ from{left:-40%;} to{left:120%;} }
+.ow-head{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.live-chip{
+  display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--signal);
+}
+.live-chip i{width:6px;height:6px;border-radius:50%;background:var(--signal);}
+.live-chip.ended{color:var(--dim);}
+.live-chip.ended i{background:var(--dim);}
+.ow-channel{font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace;}
+.ow-question{
+  font-family:var(--display-font);font-weight:700;font-size:18px;line-height:1.25;
+  margin:0 0 12px 0;color:var(--paper);
+}
+.ow-option{margin-bottom:9px;}
+.ow-option-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.ow-option-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;}
+.ow-cmd{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
+  color:var(--ink);background:var(--signal-color,var(--signal));padding:2px 5px;border-radius:4px;
+}
+.ow-pct{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--dim);}
+.ow-bar-track{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden;}
+.ow-bar-fill{
+  height:100%;border-radius:5px;width:0%;
+  background:var(--signal-color,var(--signal));
+  transition:width .5s cubic-bezier(.2,.8,.2,1);
+}
+.ow-option.leader .ow-bar-fill{background:var(--spark);}
+.crown{display:inline-block;transform:translateY(-1px);}
+.ow-foot{
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;font-size:11px;color:var(--dim);
+  font-family:'JetBrains Mono',monospace;
+}
+.ow-empty{
+  width:360px;border:1px dashed var(--line);border-radius:var(--radius);
+  padding:22px;text-align:center;color:var(--dim);font-size:12.5px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span><b>CHAT POLL STUDIO</b></div>
+    <div class="topbar-actions">
+      <button class="btn" id="btnOverlayMode">Overlay-Vorschau (Vollbild)</button>
+      <button class="btn primary" id="btnDownload">Overlay-HTML exportieren</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="rail">
+      <div class="tabs">
+        <div class="tab active" data-tab="setup">Umfrage</div>
+        <div class="tab" data-tab="design">Design</div>
+      </div>
+
+      <div class="rail-panel active" id="panel-setup">
+        <div class="field">
+          <label>Twitch-Kanal</label>
+          <input type="text" id="channelInput" placeholder="z. B. deinkanalname">
+        </div>
+        <div class="field">
+          <label>Frage</label>
+          <input type="text" id="questionInput" placeholder="Was spiele ich als n\u00e4chstes?">
+        </div>
+        <div class="field">
+          <label>Antwortoptionen (max. 8)</label>
+          <div id="optionsList"></div>
+          <button class="btn small" id="btnAddOption" type="button">+ Option</button>
+        </div>
+        <div class="field">
+          <label>Timer (Sekunden, 0 = manuell stoppen)</label>
+          <input type="number" id="timerInput" value="0" min="0">
+        </div>
+        <div class="field">
+          <label>Ergebnis nach Ende einblenden f\u00fcr (Sekunden, 0 = dauerhaft)</label>
+          <input type="number" id="resultInput" value="15" min="0">
+        </div>
+        <div class="hint">Zuschauer stimmen ab, indem sie die passende Zahl (z. B. <b>1</b>) im Twitch-Chat schreiben. Kein Bot, kein Login n\u00f6tig \u2014 es wird nur der \u00f6ffentliche Chat live mitgelesen.</div>
+      </div>
+
+      <div class="rail-panel" id="panel-design">
+        <div class="field">
+          <label>Akzentfarbe</label>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div class="field">
+          <label>Schriftstil (\u00dcberschrift)</label>
+          <select id="fontSelect">
+            <option value="'Space Grotesk',sans-serif">Broadcast (Space Grotesk)</option>
+            <option value="'Bebas Neue',sans-serif">Marquee (Bebas Neue)</option>
+            <option value="'IBM Plex Mono',monospace">Terminal (IBM Plex Mono)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Eckenradius</label>
+          <input type="range" id="radiusRange" min="0" max="28" value="14" style="width:100%;">
+        </div>
+        <div class="field">
+          <label>Position im Stream</label>
+          <select id="cornerSelect">
+            <option value="bottom-right">Unten rechts</option>
+            <option value="bottom-left">Unten links</option>
+            <option value="top-right">Oben rechts</option>
+            <option value="top-left">Oben links</option>
+          </select>
+        </div>
+        <div class="field toggle-row">
+          <label style="margin:0;">Leucht-Effekt (Glow)</label>
+          <label class="switch">
+            <input type="checkbox" id="glowToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="rail-footer">
+        <div class="status-line" id="statusLine">Bereit</div>
+        <button class="btn primary" id="btnStart">Umfrage starten</button>
+        <button class="btn danger" id="btnStop" style="display:none;">Umfrage beenden</button>
+        <button class="btn" id="btnReset">Neue Umfrage</button>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-frame" id="stageFrame" data-corner="bottom-right">
+        <div id="overlayHost"></div>
+      </div>
+      <div class="stage-footer">
+        Das kariert schraffierte Feld zeigt den transparenten Hintergrund \u2014 so sieht es sp\u00e4ter in OBS als Browser-Quelle aus. Exportiere die Datei und h\u00e4nge <code>?view=overlay</code> an die URL, mit der du sie hostest (z. B. GitHub Pages, Netlify).
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ACCENTS = ["#4EF0C4","#FF4FA3","#FFB020","#7C9CFF","#FF6B4A","#B98BFF"];
+
+  const state = {
+    channel:"", question:"Was spiele ich als n\u00e4chstes?",
+    options:[{label:"Elden Ring"},{label:"Hades II"},{label:"Hollow Knight"}],
+    timerSeconds:0,
+    resultSeconds:15,
+    widgetVisible:true,
+    resultTimerHandle:null,
+    design:{accent:ACCENTS[0], font:"'Space Grotesk',sans-serif", radius:14, corner:"bottom-right", glow:true},
+    live:false, ended:false,
+    votes:new Map(), // username -> optionIndex
+    ws:null, timerHandle:null, remaining:0
+  };
+
+  const $ = sel => document.querySelector(sel);
+  const optionsList = $("#optionsList");
+  const overlayHost = $("#overlayHost");
+  const statusLine = $("#statusLine");
+
+  // ---------- tabs ----------
+  document.querySelectorAll(".tab").forEach(tab=>{
+    tab.addEventListener("click",()=>{
+      document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+      document.querySelectorAll(".rail-panel").forEach(p=>p.classList.remove("active"));
+      tab.classList.add("active");
+      $("#panel-"+tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ---------- setup fields ----------
+  $("#channelInput").addEventListener("input", e=> state.channel = e.target.value.trim());
+  $("#questionInput").addEventListener("input", e=>{ state.question = e.target.value; renderOverlay(); });
+  $("#timerInput").addEventListener("input", e=> state.timerSeconds = Math.max(0, parseInt(e.target.value||"0",10)));
+  $("#resultInput").addEventListener("input", e=> state.resultSeconds = Math.max(0, parseInt(e.target.value||"0",10)));
+
+  function renderOptionsList(){
+    optionsList.innerHTML = "";
+    state.options.forEach((opt,i)=>{
+      const row = document.createElement("div");
+      row.className = "option-row";
+      row.innerHTML = `<span class="option-tag">${i+1}</span>
+        <input type="text" value="${escapeAttr(opt.label)}" placeholder="Option ${i+1}">
+        <button class="rm" type="button" title="entfernen">\u2715</button>`;
+      row.querySelector("input").addEventListener("input", e=>{ opt.label = e.target.value; renderOverlay(); });
+      row.querySelector(".rm").addEventListener("click", ()=>{
+        if(state.options.length<=2) return;
+        state.options.splice(i,1); renderOptionsList(); renderOverlay();
+      });
+      optionsList.appendChild(row);
+    });
+    $("#btnAddOption").disabled = state.options.length>=8;
+  }
+  $("#btnAddOption").addEventListener("click", ()=>{
+    if(state.options.length>=8) return;
+    state.options.push({label:""});
+    renderOptionsList(); renderOverlay();
+  });
+
+  // ---------- design fields ----------
+  const swatchesEl = $("#swatches");
+  ACCENTS.forEach(color=>{
+    const s = document.createElement("div");
+    s.className = "swatch" + (color===state.design.accent?" active":"");
+    s.style.background = color;
+    s.addEventListener("click", ()=>{
+      state.design.accent = color;
+      swatchesEl.querySelectorAll(".swatch").forEach(el=>el.classList.remove("active"));
+      s.classList.add("active");
+      renderOverlay();
+    });
+    swatchesEl.appendChild(s);
+  });
+  $("#fontSelect").addEventListener("change", e=>{ state.design.font = e.target.value; renderOverlay(); });
+  $("#radiusRange").addEventListener("input", e=>{ state.design.radius = e.target.value; renderOverlay(); });
+  $("#cornerSelect").addEventListener("change", e=>{
+    state.design.corner = e.target.value;
+    $("#stageFrame").dataset.corner = e.target.value;
+  });
+  $("#glowToggle").addEventListener("change", e=>{ state.design.glow = e.target.checked; renderOverlay(); });
+
+  function escapeAttr(s){ return (s||"").replace(/"/g,"&quot;"); }
+  function escapeHtml(s){ return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+  // ---------- overlay rendering ----------
+  function computeCounts(){
+    const counts = new Array(state.options.length).fill(0);
+    state.votes.forEach(idx=>{ if(idx>=0 && idx<counts.length) counts[idx]++; });
+    return counts;
+  }
+
+  function renderOverlay(sweep){
+    if(!state.live && !state.ended){
+      overlayHost.innerHTML = `<div class="ow-empty">Vorschau \u2014 starte die Umfrage, um sie live zu sehen.</div>`;
+      // still show a static preview using current draft
+    }
+    const counts = computeCounts();
+    const total = counts.reduce((a,b)=>a+b,0);
+    const maxIdx = total>0 ? counts.indexOf(Math.max(...counts)) : -1;
+
+    const widget = document.createElement("div");
+    widget.className = "overlay-widget" + ((state.live||state.ended)&&state.widgetVisible?" live":"") + (state.design.glow?" glow":"") + (sweep?" sweeping":"");
+    widget.style.setProperty("--radius", state.design.radius+"px");
+    widget.style.setProperty("--display-font", state.design.font);
+    widget.style.setProperty("--signal-color", state.design.accent);
+    widget.style.setProperty("--glow-color", hexToRgba(state.design.accent,.35));
+    widget.style.borderRadius = state.design.radius+"px";
+
+    const chipClass = state.ended ? "live-chip ended" : "live-chip";
+    const chipLabel = state.ended ? "BEENDET" : (state.live ? "LIVE" : "VORSCHAU");
+
+    let optsHtml = "";
+    state.options.forEach((opt,i)=>{
+      const pct = total>0 ? Math.round((counts[i]/total)*100) : 0;
+      const isLeader = state.live || state.ended ? (i===maxIdx && total>0) : false;
+      optsHtml += `
+        <div class="ow-option${isLeader?" leader":""}">
+          <div class="ow-option-top">
+            <span class="ow-option-label"><span class="ow-cmd">${i+1}</span> ${escapeHtml(opt.label||"Option "+(i+1))} ${isLeader?crownSvg():""}</span>
+            <span class="ow-pct">${pct}%</span>
+          </div>
+          <div class="ow-bar-track"><div class="ow-bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    });
+
+    widget.innerHTML = `
+      <div class="sweep"></div>
+      <div class="ow-head">
+        <span class="${chipClass}"><i></i>${chipLabel}</span>
+        <span class="ow-channel">${state.channel ? "twitch.tv/"+escapeHtml(state.channel) : "kein Kanal gesetzt"}</span>
+      </div>
+      <div class="ow-question" style="font-family:${state.design.font}">${escapeHtml(state.question||"Deine Frage erscheint hier")}</div>
+      ${optsHtml}
+      <div class="ow-foot">
+        <span>${total} Stimme${total===1?"":"n"}</span>
+        <span>${state.live ? "Tippe 1, 2 ... im Chat" : (state.ended ? "Abstimmung geschlossen" : "")}</span>
+      </div>`;
+    overlayHost.innerHTML = "";
+    overlayHost.appendChild(widget);
+    if(sweep) requestAnimationFrame(()=> widget.classList.add("sweeping"));
+  }
+
+  function hexToRgba(hex,a){
+    const v = hex.replace("#","");
+    const r = parseInt(v.substring(0,2),16), g = parseInt(v.substring(2,4),16), b = parseInt(v.substring(4,6),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function crownSvg(){
+    return `<svg class="crown" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 19h18l-1.5-9-4.5 3.5L12 5 9 13.5 4.5 10 3 19z" fill="currentColor" style="color:var(--spark)"/></svg>`;
+  }
+
+  // ---------- twitch IRC (anonymous, read-only) ----------
+  function connectTwitch(){
+    if(!state.channel){ statusLine.textContent = "Bitte zuerst einen Kanalnamen eintragen."; return; }
+    statusLine.innerHTML = "Verbinde mit Twitch-Chat\u2026";
+    const nick = "justinfan" + Math.floor(10000 + Math.random()*80000);
+    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    state.ws = ws;
+    ws.onopen = ()=>{
+      ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+      ws.send("NICK " + nick);
+      ws.send("JOIN #" + state.channel.toLowerCase());
+    };
+    ws.onmessage = (ev)=>{
+      ev.data.split("\r\n").forEach(line=>{
+        if(!line) return;
+        if(line.startsWith("PING")){ ws.send("PONG :tmi.twitch.tv"); return; }
+        if(line.includes("PRIVMSG")){
+          const m = line.match(/:(\w+)!\w+@\S+\.tmi\.twitch\.tv PRIVMSG #\S+ :(.*)/);
+          if(m){
+            const user = m[1], text = m[2].trim();
+            const cmd = text.match(/^([1-8])$/);
+            if(cmd){
+              const idx = parseInt(cmd[1],10)-1;
+              if(idx < state.options.length){
+                state.votes.set(user, idx);
+                renderOverlay();
+                const counts = computeCounts();
+                const total = counts.reduce((a,b)=>a+b,0);
+                statusLine.innerHTML = `<b>Verbunden</b> \u00b7 ${total} Stimmen \u00b7 zuletzt ${idx+1} von ${escapeHtml(user)}`;
+              }
+            }
+          }
+        }
+        if(line.includes(" 001 ")){
+          statusLine.innerHTML = `<b>Verbunden</b> mit #${escapeHtml(state.channel)} \u00b7 0 Stimmen`;
+        }
+      });
+    };
+    ws.onerror = ()=>{ statusLine.textContent = "Verbindungsfehler \u2014 Kanalname pr\u00fcfen und erneut versuchen."; };
+    ws.onclose = ()=>{ if(state.live) statusLine.textContent = "Verbindung getrennt."; };
+  }
+
+  function startPoll(){
+    if(!state.channel){ statusLine.textContent = "Bitte einen Twitch-Kanal eintragen."; return; }
+    state.votes = new Map();
+    state.live = true; state.ended = false; state.widgetVisible = true;
+    if(state.resultTimerHandle){ clearTimeout(state.resultTimerHandle); state.resultTimerHandle = null; }
+    $("#btnStart").style.display = "none";
+    $("#btnStop").style.display = "block";
+    connectTwitch();
+    renderOverlay(true);
+    if(state.timerSeconds>0){
+      state.remaining = state.timerSeconds;
+      state.timerHandle = setInterval(()=>{
+        state.remaining--;
+        if(state.remaining<=0){ stopPoll(); }
+      },1000);
+    }
+  }
+  function stopPoll(){
+    state.live = false; state.ended = true;
+    if(state.ws){ try{ state.ws.close(); }catch(e){} }
+    if(state.timerHandle) clearInterval(state.timerHandle);
+    $("#btnStart").style.display = "block";
+    $("#btnStop").style.display = "none";
+    statusLine.textContent = "Umfrage beendet.";
+    renderOverlay();
+    if(state.resultSeconds>0){
+      state.resultTimerHandle = setTimeout(()=>{
+        state.widgetVisible = false;
+        renderOverlay();
+      }, state.resultSeconds*1000);
+    }
+  }
+  function resetPoll(){
+    stopPoll();
+    if(state.resultTimerHandle){ clearTimeout(state.resultTimerHandle); state.resultTimerHandle = null; }
+    state.ended = false;
+    state.widgetVisible = true;
+    state.votes = new Map();
+    statusLine.textContent = "Bereit";
+    renderOverlay();
+  }
+  $("#btnStart").addEventListener("click", startPoll);
+  $("#btnStop").addEventListener("click", stopPoll);
+  $("#btnReset").addEventListener("click", resetPoll);
+
+  // ---------- overlay-only fullscreen toggle ----------
+  $("#btnOverlayMode").addEventListener("click", ()=>{
+    document.body.classList.toggle("overlay-mode");
+  });
+
+  // ---------- export ----------
+  $("#btnDownload").addEventListener("click", ()=>{
+    const blob = new Blob([document.documentElement.outerHTML], {type:"text/html"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "poll-overlay.html"; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ---------- ?view=overlay support for real OBS hosting ----------
+  if(new URLSearchParams(location.search).get("view")==="overlay"){
+    document.body.classList.add("overlay-mode");
+  }
+
+  // init
+  $("#channelInput").value = state.channel;
+  $("#questionInput").value = state.question;
+  renderOptionsList();
+  renderOverlay();
+})();
+</script>
+</body>
+</html>
