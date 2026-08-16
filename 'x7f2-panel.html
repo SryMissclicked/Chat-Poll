@@ -627,6 +627,18 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     const r = s%60;
     return m + ":" + String(r).padStart(2,"0");
   }
+  // B\u00fcndelt viele Stimmen, die kurz hintereinander reinkommen (z.B. bei einem Ansturm),
+  // zu maximal einem Neuzeichnen alle ~100ms \u2014 h\u00e4lt es bei gro\u00dfen Zuschauerzahlen fl\u00fcssig.
+  let renderScheduled = false, renderQueued = false;
+  function scheduleRender(){
+    renderQueued = true;
+    if(renderScheduled) return;
+    renderScheduled = true;
+    setTimeout(()=>{
+      renderScheduled = false;
+      if(renderQueued){ renderQueued = false; renderOverlay(); }
+    }, 100);
+  }
   function hexToRgba(hex,a){
     const v = hex.replace("#","");
     const r = parseInt(v.substring(0,2),16), g = parseInt(v.substring(2,4),16), b = parseInt(v.substring(4,6),16);
@@ -695,7 +707,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
               const idx = parseInt(cmd[1],10)-1;
               if(idx < state.options.length){
                 state.votes.set(user, idx);
-                renderOverlay();
+                scheduleRender();
                 const counts = computeCounts();
                 const total = counts.reduce((a,b)=>a+b,0);
                 statusLine.innerHTML = `<b>Verbunden</b> \u00b7 ${total} Stimmen \u00b7 zuletzt ${idx+1} von ${escapeHtml(user)}`;
