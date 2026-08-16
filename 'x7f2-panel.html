@@ -573,8 +573,17 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
             const user = m[1], text = m[2].trim();
             const isBroadcaster = user.toLowerCase() === state.channel.toLowerCase();
 
-            // Broadcaster-Steuerbefehle: !poll Frage|Option1|Option2|...|Timer  und  !endpoll
-            if(isBroadcaster && /^!poll\s+/i.test(text)){
+            // Moderator-Status aus den IRC-Tags auslesen (@badges=...;mod=1;... am Zeilenanfang)
+            let isMod = false;
+            const tagsMatch = line.match(/^@([^ ]*) /);
+            if(tagsMatch){
+              const tags = tagsMatch[1];
+              isMod = /(^|;)mod=1(;|$)/.test(tags) || /badges=[^;]*moderator\//.test(tags);
+            }
+            const canControl = isBroadcaster || isMod;
+
+            // Broadcaster- & Moderator-Steuerbefehle: !poll Frage|Option1|Option2|...|Timer  und  !endpoll
+            if(canControl && /^!poll\s+/i.test(text)){
               const payload = text.replace(/^!poll\s+/i,"");
               const parts = payload.split("|").map(s=>s.trim()).filter(Boolean);
               if(parts.length>=3){
@@ -589,7 +598,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
               }
               return;
             }
-            if(isBroadcaster && /^!endpoll$/i.test(text)){
+            if(canControl && /^!endpoll$/i.test(text)){
               stopPoll();
               return;
             }
