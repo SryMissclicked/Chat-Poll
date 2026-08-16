@@ -31,6 +31,29 @@ body{
 }
 body.overlay-mode{background:transparent;}
 
+/* ---------- pin gate ---------- */
+#pinGate{
+  position:fixed;inset:0;background:var(--ink);z-index:999;
+  display:flex;align-items:center;justify-content:center;
+}
+#pinGate.hidden{display:none;}
+.pin-box{
+  width:280px;text-align:center;padding:28px 24px;
+  border:1px solid var(--line);border-radius:14px;background:var(--panel);
+}
+.pin-box .dot{width:8px;height:8px;border-radius:50%;background:var(--signal);
+  margin:0 auto 12px auto;box-shadow:0 0 0 0 rgba(78,240,196,.6);animation:pulse 2s infinite;}
+.pin-box h2{font-family:var(--display-font);font-size:16px;margin:0 0 4px 0;letter-spacing:.02em;}
+.pin-box p{font-size:12px;color:var(--dim);margin:0 0 16px 0;}
+.pin-box input{
+  width:100%;padding:12px;border-radius:9px;border:1px solid var(--line);
+  background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;
+  font-size:20px;letter-spacing:.35em;text-align:center;margin-bottom:12px;
+}
+.pin-box input:focus{outline:none;border-color:var(--signal);}
+.pin-box .btn{width:100%;}
+.pin-error{font-size:11.5px;color:#FF7FA8;height:16px;margin-bottom:4px;}
+
 /* ---------- layout ---------- */
 #app{height:100vh;display:flex;flex-direction:column;}
 .topbar{
@@ -204,6 +227,16 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 </style>
 </head>
 <body>
+<div id="pinGate">
+  <div class="pin-box">
+    <div class="dot"></div>
+    <h2>Chat Poll Studio</h2>
+    <p>PIN eingeben, um das Studio zu \u00f6ffnen</p>
+    <input type="password" id="pinInput" inputmode="numeric" maxlength="4" placeholder="\u2022\u2022\u2022\u2022" autocomplete="off">
+    <div class="pin-error" id="pinError"></div>
+    <button class="btn primary" id="pinSubmit">Entsperren</button>
+  </div>
+</div>
 <div id="app">
   <header class="topbar">
     <div class="brand"><span class="dot"></span><b>CHAT POLL STUDIO</b></div>
@@ -243,6 +276,19 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
           <input type="number" id="resultInput" value="15" min="0">
         </div>
         <div class="hint">Zuschauer stimmen ab, indem sie die passende Zahl (z. B. <b>1</b>) im Twitch-Chat schreiben. Kein Bot, kein Login n\u00f6tig \u2014 es wird nur der \u00f6ffentliche Chat live mitgelesen.</div>
+
+        <div class="field" style="margin-top:6px;padding-top:16px;border-top:1px solid var(--line);">
+          <label>1. Overlay-Link f\u00fcr OBS (einmalig einrichten)</label>
+          <input type="text" id="obsLinkOutput" readonly style="font-size:11px;">
+          <button class="btn small" id="btnCopyObsLink" type="button" style="margin-top:6px;width:100%;">Link kopieren</button>
+          <div class="hint" style="margin-top:6px;">Trag diesen Link einmalig als Browser-Quelle in OBS ein. Er bleibt danach immer gleich \u2014 auch wenn du hier neue Fragen erstellst.</div>
+        </div>
+        <div class="field">
+          <label>2. Chat-Befehl (f\u00fcr jede neue Umfrage)</label>
+          <input type="text" id="commandOutput" readonly style="font-size:11px;">
+          <button class="btn small" id="btnCopyCommand" type="button" style="margin-top:6px;width:100%;">Befehl kopieren</button>
+          <div class="hint" style="margin-top:6px;">Diesen Befehl in <b>deinen eigenen</b> Twitch-Chat posten, um die Umfrage live zu starten. Zum Beenden: <b>!endpoll</b> posten.</div>
+        </div>
       </div>
 
       <div class="rail-panel" id="panel-design">
@@ -282,9 +328,9 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 
       <div class="rail-footer">
         <div class="status-line" id="statusLine">Bereit</div>
-        <button class="btn primary" id="btnStart">Umfrage starten</button>
-        <button class="btn danger" id="btnStop" style="display:none;">Umfrage beenden</button>
-        <button class="btn" id="btnReset">Neue Umfrage</button>
+        <button class="btn primary" id="btnStart">Vorschau hier im Tab starten</button>
+        <button class="btn danger" id="btnStop" style="display:none;">Vorschau beenden</button>
+        <button class="btn" id="btnReset">Zur\u00fccksetzen</button>
       </div>
     </aside>
 
@@ -301,16 +347,55 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 
 <script>
 (function(){
+  // \u00c4ndere diese PIN jederzeit hier im Code (4 Ziffern):
+  const STUDIO_PIN = "4173";
+
+  const isOverlayView = new URLSearchParams(location.search).get("view")==="overlay";
+  const pinGate = document.getElementById("pinGate");
+  const urlParams = new URLSearchParams(location.search);
+  const FONT_MAP = {
+    grotesk:"'Space Grotesk',sans-serif",
+    marquee:"'Bebas Neue',sans-serif",
+    mono:"'IBM Plex Mono',monospace"
+  };
+  const FONT_KEYS = {"'Space Grotesk',sans-serif":"grotesk","'Bebas Neue',sans-serif":"marquee","'IBM Plex Mono',monospace":"mono"};
+  if(isOverlayView){
+    // Der reine Overlay-Link (f\u00fcr OBS) bleibt immer ungesch\u00fctzt, sonst l\u00e4dt der Stream nicht.
+    pinGate.classList.add("hidden");
+  } else {
+    const pinInput = document.getElementById("pinInput");
+    const pinError = document.getElementById("pinError");
+    const tryUnlock = ()=>{
+      if(pinInput.value === STUDIO_PIN){
+        pinGate.classList.add("hidden");
+      } else {
+        pinError.textContent = "Falsche PIN.";
+        pinInput.value = "";
+        pinInput.focus();
+      }
+    };
+    document.getElementById("pinSubmit").addEventListener("click", tryUnlock);
+    pinInput.addEventListener("keydown", e=>{ if(e.key==="Enter") tryUnlock(); });
+    pinInput.focus();
+  }
+
   const ACCENTS = ["#4EF0C4","#FF4FA3","#FFB020","#7C9CFF","#FF6B4A","#B98BFF"];
 
   const state = {
-    channel:"", question:"Was spiele ich als n\u00e4chstes?",
+    channel: urlParams.get("channel") || "",
+    question:"Was spiele ich als n\u00e4chstes?",
     options:[{label:"Elden Ring"},{label:"Hades II"},{label:"Hollow Knight"}],
     timerSeconds:0,
     resultSeconds:15,
     widgetVisible:true,
     resultTimerHandle:null,
-    design:{accent:ACCENTS[0], font:"'Space Grotesk',sans-serif", radius:14, corner:"bottom-right", glow:true},
+    design:{
+      accent: urlParams.get("accent") ? "#"+urlParams.get("accent") : ACCENTS[0],
+      font: FONT_MAP[urlParams.get("font")] || "'Space Grotesk',sans-serif",
+      radius: urlParams.get("radius") || 14,
+      corner: urlParams.get("corner") || "bottom-right",
+      glow: urlParams.get("glow") !== "0"
+    },
     live:false, ended:false,
     votes:new Map(), // username -> optionIndex
     ws:null, timerHandle:null, remaining:0
@@ -452,9 +537,10 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     return `<svg class="crown" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 19h18l-1.5-9-4.5 3.5L12 5 9 13.5 4.5 10 3 19z" fill="currentColor" style="color:var(--spark)"/></svg>`;
   }
 
-  // ---------- twitch IRC (anonymous, read-only) ----------
+  // ---------- twitch IRC (anonymous, read-only, persistent) ----------
   function connectTwitch(){
     if(!state.channel){ statusLine.textContent = "Bitte zuerst einen Kanalnamen eintragen."; return; }
+    if(state.ws && (state.ws.readyState===WebSocket.OPEN || state.ws.readyState===WebSocket.CONNECTING)) return;
     statusLine.innerHTML = "Verbinde mit Twitch-Chat\u2026";
     const nick = "justinfan" + Math.floor(10000 + Math.random()*80000);
     const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
@@ -472,8 +558,31 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
           const m = line.match(/:(\w+)!\w+@\S+\.tmi\.twitch\.tv PRIVMSG #\S+ :(.*)/);
           if(m){
             const user = m[1], text = m[2].trim();
+            const isBroadcaster = user.toLowerCase() === state.channel.toLowerCase();
+
+            // Broadcaster-Steuerbefehle: !poll Frage|Option1|Option2|...|Timer  und  !endpoll
+            if(isBroadcaster && /^!poll\s+/i.test(text)){
+              const payload = text.replace(/^!poll\s+/i,"");
+              const parts = payload.split("|").map(s=>s.trim()).filter(Boolean);
+              if(parts.length>=3){
+                let timerVal = 0;
+                if(parts.length>3 && /^\d+$/.test(parts[parts.length-1])){
+                  timerVal = parseInt(parts.pop(),10);
+                }
+                state.question = parts[0];
+                state.options = parts.slice(0,9).slice(1).map(label=>({label}));
+                state.timerSeconds = timerVal;
+                beginLivePoll();
+              }
+              return;
+            }
+            if(isBroadcaster && /^!endpoll$/i.test(text)){
+              stopPoll();
+              return;
+            }
+
             const cmd = text.match(/^([1-8])$/);
-            if(cmd){
+            if(cmd && state.live){
               const idx = parseInt(cmd[1],10)-1;
               if(idx < state.options.length){
                 state.votes.set(user, idx);
@@ -486,22 +595,22 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
           }
         }
         if(line.includes(" 001 ")){
-          statusLine.innerHTML = `<b>Verbunden</b> mit #${escapeHtml(state.channel)} \u00b7 0 Stimmen`;
+          statusLine.innerHTML = `<b>Verbunden</b> mit #${escapeHtml(state.channel)} \u00b7 wartet auf Umfrage`;
         }
       });
     };
     ws.onerror = ()=>{ statusLine.textContent = "Verbindungsfehler \u2014 Kanalname pr\u00fcfen und erneut versuchen."; };
-    ws.onclose = ()=>{ if(state.live) statusLine.textContent = "Verbindung getrennt."; };
+    ws.onclose = ()=>{ statusLine.textContent = "Verbindung getrennt."; };
   }
 
-  function startPoll(){
-    if(!state.channel){ statusLine.textContent = "Bitte einen Twitch-Kanal eintragen."; return; }
+  function beginLivePoll(){
     state.votes = new Map();
     state.live = true; state.ended = false; state.widgetVisible = true;
     if(state.resultTimerHandle){ clearTimeout(state.resultTimerHandle); state.resultTimerHandle = null; }
+    if(state.timerHandle){ clearInterval(state.timerHandle); state.timerHandle = null; }
     $("#btnStart").style.display = "none";
     $("#btnStop").style.display = "block";
-    connectTwitch();
+    renderOptionsList();
     renderOverlay(true);
     if(state.timerSeconds>0){
       state.remaining = state.timerSeconds;
@@ -511,13 +620,18 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
       },1000);
     }
   }
+
+  function startPoll(){
+    if(!state.channel){ statusLine.textContent = "Bitte einen Twitch-Kanal eintragen."; return; }
+    connectTwitch();
+    beginLivePoll();
+  }
   function stopPoll(){
     state.live = false; state.ended = true;
-    if(state.ws){ try{ state.ws.close(); }catch(e){} }
     if(state.timerHandle) clearInterval(state.timerHandle);
     $("#btnStart").style.display = "block";
     $("#btnStop").style.display = "none";
-    statusLine.textContent = "Umfrage beendet.";
+    statusLine.textContent = "Umfrage beendet \u2014 h\u00f6rt weiter auf !poll zu.";
     renderOverlay();
     if(state.resultSeconds>0){
       state.resultTimerHandle = setTimeout(()=>{
@@ -539,10 +653,47 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   $("#btnStop").addEventListener("click", stopPoll);
   $("#btnReset").addEventListener("click", resetPoll);
 
-  // ---------- overlay-only fullscreen toggle ----------
+  // ---------- overlay-only fullscreen toggle (lokale Vorschau) ----------
   $("#btnOverlayMode").addEventListener("click", ()=>{
     document.body.classList.toggle("overlay-mode");
   });
+
+  // ---------- OBS-Link & Chat-Befehl generieren ----------
+  function buildObsLink(){
+    if(!state.channel) return "";
+    const p = new URLSearchParams();
+    p.set("view","overlay");
+    p.set("channel", state.channel);
+    p.set("accent", state.design.accent.replace("#",""));
+    p.set("font", FONT_KEYS[state.design.font] || "grotesk");
+    p.set("radius", state.design.radius);
+    p.set("corner", state.design.corner);
+    p.set("glow", state.design.glow ? "1" : "0");
+    const base = location.origin + location.pathname;
+    return base + "?" + p.toString();
+  }
+  function buildCommand(){
+    const opts = state.options.map(o=>o.label||"Option").join("|");
+    const timerPart = state.timerSeconds>0 ? ("|"+state.timerSeconds) : "";
+    return `!poll ${state.question}|${opts}${timerPart}`;
+  }
+  function refreshGenerators(){
+    $("#obsLinkOutput").value = buildObsLink() || "Erst Twitch-Kanal eintragen \u2026";
+    $("#commandOutput").value = buildCommand();
+  }
+  function copyToClipboard(text, btn){
+    navigator.clipboard.writeText(text).then(()=>{
+      const old = btn.textContent;
+      btn.textContent = "Kopiert!";
+      setTimeout(()=> btn.textContent = old, 1500);
+    });
+  }
+  $("#btnCopyObsLink").addEventListener("click", ()=>{
+    const link = buildObsLink();
+    if(!link){ statusLine.textContent = "Bitte zuerst einen Twitch-Kanal eintragen."; return; }
+    copyToClipboard(link, $("#btnCopyObsLink"));
+  });
+  $("#btnCopyCommand").addEventListener("click", ()=> copyToClipboard(buildCommand(), $("#btnCopyCommand")));
 
   // ---------- export ----------
   $("#btnDownload").addEventListener("click", ()=>{
@@ -553,15 +704,24 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     URL.revokeObjectURL(url);
   });
 
-  // ---------- ?view=overlay support for real OBS hosting ----------
-  if(new URLSearchParams(location.search).get("view")==="overlay"){
-    document.body.classList.add("overlay-mode");
-  }
-
   // init
-  $("#channelInput").value = state.channel;
-  $("#questionInput").value = state.question;
-  renderOptionsList();
+  if(!isOverlayView){
+    $("#channelInput").value = state.channel;
+    $("#questionInput").value = state.question;
+    renderOptionsList();
+    refreshGenerators();
+    ["channelInput","questionInput","timerInput","resultInput"].forEach(id=>{
+      $("#"+id).addEventListener("input", refreshGenerators);
+    });
+    document.getElementById("swatches").addEventListener("click", refreshGenerators);
+    $("#fontSelect").addEventListener("change", refreshGenerators);
+    $("#radiusRange").addEventListener("input", refreshGenerators);
+    $("#cornerSelect").addEventListener("change", refreshGenerators);
+    $("#glowToggle").addEventListener("change", refreshGenerators);
+  }
+  if(isOverlayView && state.channel){
+    connectTwitch();
+  }
   renderOverlay();
 })();
 </script>
