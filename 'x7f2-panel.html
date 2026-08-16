@@ -173,7 +173,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 
 /* ---------- overlay widget ---------- */
 .overlay-widget{
-  width:360px;background:rgba(15,18,26,.98);backdrop-filter:blur(6px);
+  width:360px;background:rgba(0,0,0,.98);backdrop-filter:blur(6px);
   border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;
   position:relative;overflow:hidden;
   opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .35s ease;
@@ -197,6 +197,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 .live-chip.ended{color:var(--dim);}
 .live-chip.ended i{background:var(--dim);}
 .ow-channel{font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace;}
+.ow-timer-row{text-align:right;margin-bottom:6px;}
 .ow-timer{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--dim);}
 .ow-timer.low{color:var(--warn);}
 .ow-question{
@@ -443,7 +444,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     pinInput.focus();
   }
 
-  const ACCENTS = ["#22F5C4","#FF2E9C","#FFAA00","#5C7CFF","#FF5630","#A855F7"];
+  const ACCENTS = ["#E8241C","#22F5C4","#FF2E9C","#FFAA00","#5C7CFF","#A855F7"];
 
   // Zuletzt genutzten Kanal & Design lokal merken (nur im Studio, nicht im Overlay-Link).
   let saved = null;
@@ -623,11 +624,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 
     widget.innerHTML = `
       <div class="sweep"></div>
-      <div class="ow-head">
-        <span class="${chipClass}"><i></i>${chipLabel}</span>
-        ${timerActive ? `<span class="ow-timer${state.remaining<=10?" low":""}">\u23f1 ${timerLabel}</span>` : ""}
-        <span class="ow-channel">${state.channel ? "twitch.tv/"+escapeHtml(state.channel) : "kein Kanal gesetzt"}</span>
-      </div>
+      ${timerActive ? `<div class="ow-timer-row"><span class="ow-timer${state.remaining<=10?" low":""}">\u23f1 ${timerLabel}</span></div>` : ""}
       <div class="ow-question" style="font-family:${state.design.font}">${escapeHtml(state.question||"Deine Frage erscheint hier")}</div>
       ${bodyHtml}
       <div class="ow-foot">
