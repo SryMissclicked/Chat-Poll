@@ -180,7 +180,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   zoom:var(--fit-scale);
 }
 .overlay-widget.live{opacity:1;transform:translateY(0);}
-.overlay-widget.glow{box-shadow:0 0 0 1px rgba(78,240,196,.15),0 8px 30px -6px var(--glow-color,rgba(78,240,196,.35));}
+.overlay-widget.glow{box-shadow:0 0 0 1.5px var(--glow-edge,rgba(78,240,196,.5)),0 0 45px 4px var(--glow-color,rgba(78,240,196,.55)),0 10px 40px -4px var(--glow-color,rgba(78,240,196,.6));}
 .sweep{
   position:absolute;top:0;left:-40%;width:40%;height:100%;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
@@ -566,7 +566,8 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     widget.style.setProperty("--radius", state.design.radius+"px");
     widget.style.setProperty("--display-font", state.design.font);
     widget.style.setProperty("--signal-color", state.design.accent);
-    widget.style.setProperty("--glow-color", hexToRgba(state.design.accent,.35));
+    widget.style.setProperty("--glow-color", hexToRgba(state.design.accent,.55));
+    widget.style.setProperty("--glow-edge", hexToRgba(state.design.accent,.7));
     widget.style.borderRadius = state.design.radius+"px";
 
     const chipClass = state.ended ? "live-chip ended" : "live-chip";
