@@ -231,8 +231,8 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   <div class="pin-box">
     <div class="dot"></div>
     <h2>Chat Poll Studio</h2>
-    <p>PIN eingeben, um das Studio zu \u00f6ffnen</p>
-    <input type="password" id="pinInput" inputmode="numeric" maxlength="4" placeholder="\u2022\u2022\u2022\u2022" autocomplete="off">
+    <p>PIN eingeben, um das Studio zu öffnen</p>
+    <input type="password" id="pinInput" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
     <div class="pin-error" id="pinError"></div>
     <button class="btn primary" id="pinSubmit">Entsperren</button>
   </div>
@@ -260,7 +260,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
         </div>
         <div class="field">
           <label>Frage</label>
-          <input type="text" id="questionInput" placeholder="Was spiele ich als n\u00e4chstes?">
+          <input type="text" id="questionInput" placeholder="Was spiele ich als nächstes?">
         </div>
         <div class="field">
           <label>Antwortoptionen (max. 8)</label>
@@ -272,19 +272,19 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
           <input type="number" id="timerInput" value="0" min="0">
         </div>
         <div class="field">
-          <label>Ergebnis nach Ende einblenden f\u00fcr (Sekunden, 0 = dauerhaft)</label>
+          <label>Ergebnis nach Ende einblenden für (Sekunden, 0 = dauerhaft)</label>
           <input type="number" id="resultInput" value="15" min="0">
         </div>
-        <div class="hint">Zuschauer stimmen ab, indem sie die passende Zahl (z. B. <b>1</b>) im Twitch-Chat schreiben. Kein Bot, kein Login n\u00f6tig \u2014 es wird nur der \u00f6ffentliche Chat live mitgelesen.</div>
+        <div class="hint">Zuschauer stimmen ab, indem sie die passende Zahl (z. B. <b>1</b>) im Twitch-Chat schreiben. Kein Bot, kein Login nötig — es wird nur der öffentliche Chat live mitgelesen.</div>
 
         <div class="field" style="margin-top:6px;padding-top:16px;border-top:1px solid var(--line);">
-          <label>1. Overlay-Link f\u00fcr OBS (einmalig einrichten)</label>
+          <label>1. Overlay-Link für OBS (einmalig einrichten)</label>
           <input type="text" id="obsLinkOutput" readonly style="font-size:11px;">
           <button class="btn small" id="btnCopyObsLink" type="button" style="margin-top:6px;width:100%;">Link kopieren</button>
-          <div class="hint" style="margin-top:6px;">Trag diesen Link einmalig als Browser-Quelle in OBS ein. Er bleibt danach immer gleich \u2014 auch wenn du hier neue Fragen erstellst.</div>
+          <div class="hint" style="margin-top:6px;">Trag diesen Link einmalig als Browser-Quelle in OBS ein. Er bleibt danach immer gleich — auch wenn du hier neue Fragen erstellst.</div>
         </div>
         <div class="field">
-          <label>2. Chat-Befehl (f\u00fcr jede neue Umfrage)</label>
+          <label>2. Chat-Befehl (für jede neue Umfrage)</label>
           <input type="text" id="commandOutput" readonly style="font-size:11px;">
           <button class="btn small" id="btnCopyCommand" type="button" style="margin-top:6px;width:100%;">Befehl kopieren</button>
           <div class="hint" style="margin-top:6px;">Diesen Befehl in <b>deinen eigenen</b> Twitch-Chat posten, um die Umfrage live zu starten. Zum Beenden: <b>!endpoll</b> posten.</div>
@@ -297,7 +297,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
           <div class="swatches" id="swatches"></div>
         </div>
         <div class="field">
-          <label>Schriftstil (\u00dcberschrift)</label>
+          <label>Schriftstil (Überschrift)</label>
           <select id="fontSelect">
             <option value="'Space Grotesk',sans-serif">Broadcast (Space Grotesk)</option>
             <option value="'Bebas Neue',sans-serif">Marquee (Bebas Neue)</option>
@@ -330,7 +330,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
         <div class="status-line" id="statusLine">Bereit</div>
         <button class="btn primary" id="btnStart">Vorschau hier im Tab starten</button>
         <button class="btn danger" id="btnStop" style="display:none;">Vorschau beenden</button>
-        <button class="btn" id="btnReset">Zur\u00fccksetzen</button>
+        <button class="btn" id="btnReset">Zurücksetzen</button>
       </div>
     </aside>
 
@@ -339,7 +339,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
         <div id="overlayHost"></div>
       </div>
       <div class="stage-footer">
-        Das kariert schraffierte Feld zeigt den transparenten Hintergrund \u2014 so sieht es sp\u00e4ter in OBS als Browser-Quelle aus. Exportiere die Datei und h\u00e4nge <code>?view=overlay</code> an die URL, mit der du sie hostest (z. B. GitHub Pages, Netlify).
+        Das kariert schraffierte Feld zeigt den transparenten Hintergrund — so sieht es später in OBS als Browser-Quelle aus. Exportiere die Datei und hänge <code>?view=overlay</code> an die URL, mit der du sie hostest (z. B. GitHub Pages, Netlify).
       </div>
     </main>
   </div>
