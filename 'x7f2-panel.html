@@ -635,10 +635,12 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     if(!state.channel){ statusLine.textContent = "Bitte zuerst einen Kanalnamen eintragen."; return; }
     if(state.ws && (state.ws.readyState===WebSocket.OPEN || state.ws.readyState===WebSocket.CONNECTING)) return;
     statusLine.innerHTML = "Verbinde mit Twitch-Chat\u2026";
+    console.log("[ChatPollStudio] Verbinde zu Twitch-Chat, Kanal:", state.channel);
     const nick = "justinfan" + Math.floor(10000 + Math.random()*80000);
     const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
     state.ws = ws;
     ws.onopen = ()=>{
+      console.log("[ChatPollStudio] WebSocket offen, sende JOIN f\u00fcr #"+state.channel.toLowerCase());
       ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
       ws.send("NICK " + nick);
       ws.send("JOIN #" + state.channel.toLowerCase());
@@ -662,6 +664,11 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
             }
             const canControl = isBroadcaster || isMod;
 
+            if(/^!poll\b/i.test(text) || /^!endpoll\b/i.test(text)){
+              console.log("[ChatPollStudio] Befehl empfangen von '"+user+"':", text,
+                "| isBroadcaster:", isBroadcaster, "| isMod:", isMod, "| erlaubt:", canControl);
+            }
+
             // Broadcaster- & Moderator-Steuerbefehle: !poll Frage|Option1|Option2|...|Timer  und  !endpoll
             if(canControl && /^!poll\s+/i.test(text)){
               const payload = text.replace(/^!poll\s+/i,"");
@@ -674,7 +681,10 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
                 state.question = parts[0];
                 state.options = parts.slice(0,9).slice(1).map(label=>({label}));
                 state.timerSeconds = timerVal;
+                console.log("[ChatPollStudio] Starte Umfrage:", state.question, state.options);
                 beginLivePoll();
+              } else {
+                console.log("[ChatPollStudio] Befehl ignoriert \u2014 zu wenige Teile (mind. Frage + 2 Optionen n\u00f6tig):", parts);
               }
               return;
             }
@@ -697,12 +707,13 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
           }
         }
         if(line.includes(" 001 ")){
+          console.log("[ChatPollStudio] JOIN best\u00e4tigt f\u00fcr #"+state.channel);
           statusLine.innerHTML = `<b>Verbunden</b> mit #${escapeHtml(state.channel)} \u00b7 wartet auf Umfrage`;
         }
       });
     };
-    ws.onerror = ()=>{ statusLine.textContent = "Verbindungsfehler \u2014 Kanalname pr\u00fcfen und erneut versuchen."; };
-    ws.onclose = ()=>{ statusLine.textContent = "Verbindung getrennt."; };
+    ws.onerror = (e)=>{ console.log("[ChatPollStudio] WebSocket-Fehler:", e); statusLine.textContent = "Verbindungsfehler \u2014 Kanalname pr\u00fcfen und erneut versuchen."; };
+    ws.onclose = (e)=>{ console.log("[ChatPollStudio] WebSocket geschlossen. Code:", e.code, "Grund:", e.reason); statusLine.textContent = "Verbindung getrennt."; };
   }
 
   function beginLivePoll(){
