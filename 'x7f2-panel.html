@@ -243,22 +243,21 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   padding:22px;text-align:center;color:var(--dim);font-size:12.5px;
 }
 .ow-winner{
-  text-align:center;padding:2px 4px 0 4px;
+  text-align:center;padding:8px 4px 2px 4px;
 }
-.ow-winner .crown-big{margin-bottom:6px;}
 .ow-winner-label{
   font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;
-  font-weight:700;margin-bottom:6px;
+  font-weight:700;margin-bottom:8px;
 }
 .ow-winner-name{
-  font-family:var(--display-font);font-weight:800;font-size:18px;line-height:1.25;
-  color:var(--paper);margin-bottom:6px;word-break:break-word;
+  font-family:var(--display-font);font-weight:800;font-size:20px;line-height:1.25;
+  color:var(--paper);margin-bottom:8px;word-break:break-word;
 }
 .ow-winner-stats{
   display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:0;
 }
 .ow-winner-pct{
-  font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;
+  font-family:'JetBrains Mono',monospace;font-weight:800;font-size:32px;
   color:var(--col-color,var(--signal-color,var(--signal)));
 }
 .ow-winner-votes{
@@ -555,7 +554,6 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
         const pct = Math.round((maxCount/total)*100);
         bodyHtml = `
           <div class="ow-winner">
-            <div class="crown-big">${crownSvg(20)}</div>
             <div class="ow-winner-label">Unentschieden</div>
             <div class="ow-winner-name">${names}</div>
             <div class="ow-winner-stats">
@@ -569,7 +567,6 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
         const pct = Math.round((maxCount/total)*100);
         bodyHtml = `
           <div class="ow-winner" style="--col-color:${winColor}">
-            <div class="crown-big">${crownSvg(20, winColor)}</div>
             <div class="ow-winner-label">Gewonnen hat</div>
             <div class="ow-winner-name">${winLabel}</div>
             <div class="ow-winner-stats">
