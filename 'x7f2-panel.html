@@ -123,11 +123,6 @@ body.overlay-mode{background:transparent;}
 }
 .option-row .rm:hover{border-color:#FF7FA8;color:#FF7FA8;}
 .hint{font-size:11.5px;color:var(--dim);line-height:1.5;}
-.swatches{display:flex;gap:8px;flex-wrap:wrap;}
-.swatch{
-  width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;
-}
-.swatch.active{border-color:#fff;}
 .toggle-row{display:flex;align-items:center;justify-content:space-between;}
 .switch{position:relative;width:38px;height:22px;flex:0 0 auto;}
 .switch input{opacity:0;width:0;height:0;}
@@ -180,7 +175,6 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   zoom:var(--fit-scale);
 }
 .overlay-widget.live{opacity:1;transform:translateY(0);}
-.overlay-widget.glow{box-shadow:0 0 0 1.5px var(--glow-edge,rgba(78,240,196,.5)),0 0 45px 4px var(--glow-color,rgba(78,240,196,.55)),0 10px 40px -4px var(--glow-color,rgba(78,240,196,.6));}
 .sweep{
   position:absolute;top:0;left:-40%;width:40%;height:100%;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
@@ -211,18 +205,18 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 .ow-option-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;}
 .ow-cmd{
   font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
-  color:var(--ink);background:var(--signal-color,var(--signal));padding:2px 5px;border-radius:4px;
+  color:#fff;background:var(--col-color,var(--signal-color,var(--signal)));padding:2px 5px;border-radius:4px;
 }
 .ow-pct{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--dim);}
 .ow-pct-big{font-size:18px;font-weight:700;color:var(--dim);}
-.ow-option.leader .ow-pct-big{color:var(--signal-color,var(--signal));}
+.ow-option.leader .ow-pct-big{color:var(--col-color,var(--signal-color,var(--signal)));}
 .ow-bar-track{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden;}
 .ow-bar-fill{
   height:100%;border-radius:5px;width:0%;
-  background:var(--signal-color,var(--signal));
+  background:var(--col-color,var(--signal-color,var(--signal)));
   transition:width .5s cubic-bezier(.2,.8,.2,1);
 }
-.ow-option.leader .ow-bar-fill{background:var(--signal-color,var(--signal));}
+.ow-option.leader .ow-bar-fill{background:var(--col-color,var(--signal-color,var(--signal)));}
 .crown{display:inline-block;transform:translateY(-1px);}
 .ow-grid{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px 0;}
 .ow-col{
@@ -234,11 +228,11 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   border-bottom:2px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   display:flex;align-items:center;justify-content:center;gap:5px;
 }
-.ow-col.leader .ow-col-label{border-bottom-color:var(--signal-color,var(--signal));}
+.ow-col.leader .ow-col-label{border-bottom-color:var(--col-color,var(--signal-color,var(--signal)));}
 .ow-col-pct{
   font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;color:var(--dim);
 }
-.ow-col.leader .ow-col-pct{color:var(--signal-color,var(--signal));}
+.ow-col.leader .ow-col-pct{color:var(--col-color,var(--signal-color,var(--signal)));}
 .ow-foot{
   margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
   display:flex;justify-content:space-between;font-size:11px;color:var(--dim);
@@ -265,7 +259,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 }
 .ow-winner-pct{
   font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;
-  color:var(--signal-color,var(--signal));
+  color:var(--col-color,var(--signal-color,var(--signal)));
 }
 .ow-winner-votes{
   font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);
@@ -340,8 +334,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
 
       <div class="rail-panel" id="panel-design">
         <div class="field">
-          <label>Akzentfarbe</label>
-          <div class="swatches" id="swatches"></div>
+          <div class="hint">Jede Antwortoption bekommt automatisch eine eigene feste Farbe (1 = Rot, 2 = Blau, ...). Die gerade führende Option wird in ihrer Farbe hervorgehoben.</div>
         </div>
         <div class="field">
           <label>Schriftstil (Überschrift)</label>
@@ -368,13 +361,6 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
             <option value="top-right">Oben rechts</option>
             <option value="top-left">Oben links</option>
           </select>
-        </div>
-        <div class="field toggle-row">
-          <label style="margin:0;">Leucht-Effekt (Glow)</label>
-          <label class="switch">
-            <input type="checkbox" id="glowToggle" checked>
-            <span class="slider"></span>
-          </label>
         </div>
       </div>
 
@@ -444,7 +430,8 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     pinInput.focus();
   }
 
-  const ACCENTS = ["#E8241C","#22F5C4","#FF2E9C","#FFAA00","#5C7CFF","#A855F7"];
+  // Feste Farbe pro Antwortoption (1=Rot, 2=Blau, ...) \u2014 statt einer gemeinsamen Akzentfarbe.
+  const OPTION_COLORS = ["#E8241C","#3B82F6","#FFAA00","#22F5C4","#A855F7","#FF6B4A","#5C7CFF","#FF2E9C"];
 
   // Zuletzt genutzten Kanal & Design lokal merken (nur im Studio, nicht im Overlay-Link).
   let saved = null;
@@ -455,17 +442,15 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   const state = {
     channel: urlParams.get("channel") || (saved && saved.channel) || "",
     question:"Was spiele ich als n\u00e4chstes?",
-    options:[{label:"Elden Ring"},{label:"Hades II"},{label:"Hollow Knight"}],
+    options:[{label:"Elden Ring"},{label:"Hades II"}],
     timerSeconds:0,
     resultSeconds:15,
     widgetVisible:true,
     resultTimerHandle:null,
     design:{
-      accent: urlParams.get("accent") ? "#"+urlParams.get("accent") : (saved && saved.design && saved.design.accent) || ACCENTS[0],
       font: FONT_MAP[urlParams.get("font")] || (saved && saved.design && saved.design.font) || "'Space Grotesk',sans-serif",
       radius: urlParams.get("radius") || (saved && saved.design && saved.design.radius) || 14,
       corner: urlParams.get("corner") || (saved && saved.design && saved.design.corner) || "bottom-right",
-      glow: urlParams.get("glow") ? urlParams.get("glow") !== "0" : (saved && saved.design ? saved.design.glow : true),
       size: parseFloat(urlParams.get("size")) || (saved && saved.design && saved.design.size) || 1.3
     },
     live:false, ended:false,
@@ -518,19 +503,6 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   });
 
   // ---------- design fields ----------
-  const swatchesEl = $("#swatches");
-  ACCENTS.forEach(color=>{
-    const s = document.createElement("div");
-    s.className = "swatch" + (color===state.design.accent?" active":"");
-    s.style.background = color;
-    s.addEventListener("click", ()=>{
-      state.design.accent = color;
-      swatchesEl.querySelectorAll(".swatch").forEach(el=>el.classList.remove("active"));
-      s.classList.add("active");
-      renderOverlay();
-    });
-    swatchesEl.appendChild(s);
-  });
   $("#fontSelect").addEventListener("change", e=>{ state.design.font = e.target.value; renderOverlay(); });
   $("#radiusRange").addEventListener("input", e=>{ state.design.radius = e.target.value; renderOverlay(); });
   $("#sizeRange").addEventListener("input", e=>{ state.design.size = parseFloat(e.target.value); renderOverlay(); });
@@ -538,7 +510,6 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     state.design.corner = e.target.value;
     $("#stageFrame").dataset.corner = e.target.value;
   });
-  $("#glowToggle").addEventListener("change", e=>{ state.design.glow = e.target.checked; renderOverlay(); });
 
   function escapeAttr(s){ return (s||"").replace(/"/g,"&quot;"); }
   function escapeHtml(s){ return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
@@ -562,12 +533,12 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     const maxIdx = winnerIdxs.length ? winnerIdxs[0] : -1;
 
     const widget = document.createElement("div");
-    widget.className = "overlay-widget" + ((state.live||state.ended)&&state.widgetVisible?" live":"") + (state.design.glow?" glow":"") + (sweep?" sweeping":"");
+    widget.className = "overlay-widget" + ((state.live||state.ended)&&state.widgetVisible?" live":"") + (sweep?" sweeping":"");
     widget.style.setProperty("--radius", state.design.radius+"px");
     widget.style.setProperty("--display-font", state.design.font);
-    widget.style.setProperty("--signal-color", state.design.accent);
-    widget.style.setProperty("--glow-color", hexToRgba(state.design.accent,.55));
-    widget.style.setProperty("--glow-edge", hexToRgba(state.design.accent,.7));
+    if(maxIdx>=0){
+      widget.style.setProperty("--signal-color", OPTION_COLORS[maxIdx % OPTION_COLORS.length]);
+    }
     widget.style.borderRadius = state.design.radius+"px";
 
     const chipClass = state.ended ? "live-chip ended" : "live-chip";
@@ -593,11 +564,12 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
             </div>
           </div>`;
       } else {
+        const winColor = OPTION_COLORS[maxIdx % OPTION_COLORS.length];
         const winLabel = escapeHtml(state.options[maxIdx].label||"Option "+(maxIdx+1));
         const pct = Math.round((maxCount/total)*100);
         bodyHtml = `
-          <div class="ow-winner">
-            <div class="crown-big">${crownSvg(28)}</div>
+          <div class="ow-winner" style="--col-color:${winColor}">
+            <div class="crown-big">${crownSvg(28, winColor)}</div>
             <div class="ow-winner-label">Gewonnen hat</div>
             <div class="ow-winner-name">${winLabel}</div>
             <div class="ow-winner-stats">
@@ -611,9 +583,10 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
       state.options.forEach((opt,i)=>{
         const pct = total>0 ? Math.round((counts[i]/total)*100) : 0;
         const isLeader = state.live ? (i===maxIdx && total>0) : false;
+        const col = OPTION_COLORS[i % OPTION_COLORS.length];
         colsHtml += `
-          <div class="ow-col${isLeader?" leader":""}">
-            <div class="ow-col-label"><span class="ow-cmd">${i+1}</span> ${escapeHtml(opt.label||"Option "+(i+1))} ${isLeader?crownSvg(13):""}</div>
+          <div class="ow-col${isLeader?" leader":""}" style="--col-color:${col}">
+            <div class="ow-col-label"><span class="ow-cmd">${i+1}</span> ${escapeHtml(opt.label||"Option "+(i+1))} ${isLeader?crownSvg(13,col):""}</div>
             <div class="ow-col-pct">${pct}%</div>
           </div>`;
       });
@@ -627,11 +600,7 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
       <div class="sweep"></div>
       ${timerActive ? `<div class="ow-timer-row"><span class="ow-timer${state.remaining<=10?" low":""}">\u23f1 ${timerLabel}</span></div>` : ""}
       <div class="ow-question" style="font-family:${state.design.font}">${escapeHtml(state.question||"Deine Frage erscheint hier")}</div>
-      ${bodyHtml}
-      <div class="ow-foot">
-        <span>${total} Stimme${total===1?"":"n"}</span>
-        <span>${state.live ? "Tippe 1, 2 ... im Chat" : (state.ended ? "Abstimmung geschlossen" : "")}</span>
-      </div>`;
+      ${bodyHtml}`;
     overlayHost.innerHTML = "";
     overlayHost.appendChild(widget);
     if(sweep) requestAnimationFrame(()=> widget.classList.add("sweeping"));
@@ -660,9 +629,10 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     const r = parseInt(v.substring(0,2),16), g = parseInt(v.substring(2,4),16), b = parseInt(v.substring(4,6),16);
     return `rgba(${r},${g},${b},${a})`;
   }
-  function crownSvg(size){
+  function crownSvg(size, color){
     const s = size || 12;
-    return `<svg class="crown" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M3 19h18l-1.5-9-4.5 3.5L12 5 9 13.5 4.5 10 3 19z" fill="currentColor" style="color:var(--signal-color,var(--signal))"/></svg>`;
+    const c = color || "var(--signal-color,var(--signal))";
+    return `<svg class="crown" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M3 19h18l-1.5-9-4.5 3.5L12 5 9 13.5 4.5 10 3 19z" fill="currentColor" style="color:${c}"/></svg>`;
   }
 
   // ---------- twitch IRC (anonymous, read-only, persistent) ----------
@@ -802,11 +772,9 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     const p = new URLSearchParams();
     p.set("view","overlay");
     p.set("channel", state.channel);
-    p.set("accent", state.design.accent.replace("#",""));
     p.set("font", FONT_KEYS[state.design.font] || "grotesk");
     p.set("radius", state.design.radius);
     p.set("corner", state.design.corner);
-    p.set("glow", state.design.glow ? "1" : "0");
     p.set("size", state.design.size);
     const base = location.origin + location.pathname;
     return base + "?" + p.toString();
@@ -860,19 +828,16 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
     $("#radiusRange").value = state.design.radius;
     $("#sizeRange").value = state.design.size;
     $("#cornerSelect").value = state.design.corner;
-    $("#glowToggle").checked = state.design.glow;
     $("#stageFrame").dataset.corner = state.design.corner;
     renderOptionsList();
     refreshGenerators();
     ["channelInput","questionInput","timerInput","resultInput"].forEach(id=>{
       $("#"+id).addEventListener("input", refreshGenerators);
     });
-    document.getElementById("swatches").addEventListener("click", refreshGenerators);
     $("#fontSelect").addEventListener("change", refreshGenerators);
     $("#radiusRange").addEventListener("input", refreshGenerators);
     $("#sizeRange").addEventListener("input", refreshGenerators);
     $("#cornerSelect").addEventListener("change", refreshGenerators);
-    $("#glowToggle").addEventListener("change", refreshGenerators);
   }
   if(isOverlayView && state.channel){
     connectTwitch();
