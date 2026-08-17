@@ -631,15 +631,18 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
   }
 
   // ---------- twitch IRC (anonymous, read-only, persistent) ----------
+  let reconnectAttempts = 0, reconnectTimer = null;
   function connectTwitch(){
     if(!state.channel){ statusLine.textContent = "Bitte zuerst einen Kanalnamen eintragen."; return; }
     if(state.ws && (state.ws.readyState===WebSocket.OPEN || state.ws.readyState===WebSocket.CONNECTING)) return;
+    if(reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer = null; }
     statusLine.innerHTML = "Verbinde mit Twitch-Chat\u2026";
     console.log("[ChatPollStudio] Verbinde zu Twitch-Chat, Kanal:", state.channel);
     const nick = "justinfan" + Math.floor(10000 + Math.random()*80000);
     const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
     state.ws = ws;
     ws.onopen = ()=>{
+      reconnectAttempts = 0;
       console.log("[ChatPollStudio] WebSocket offen, sende JOIN f\u00fcr #"+state.channel.toLowerCase());
       ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
       ws.send("NICK " + nick);
@@ -712,8 +715,15 @@ body.overlay-mode .topbar,body.overlay-mode .rail,body.overlay-mode .stage-foote
         }
       });
     };
-    ws.onerror = (e)=>{ console.log("[ChatPollStudio] WebSocket-Fehler:", e); statusLine.textContent = "Verbindungsfehler \u2014 Kanalname pr\u00fcfen und erneut versuchen."; };
-    ws.onclose = (e)=>{ console.log("[ChatPollStudio] WebSocket geschlossen. Code:", e.code, "Grund:", e.reason); statusLine.textContent = "Verbindung getrennt."; };
+    ws.onerror = (e)=>{ console.log("[ChatPollStudio] WebSocket-Fehler:", e); statusLine.textContent = "Verbindungsfehler \u2014 versuche erneut zu verbinden\u2026"; };
+    ws.onclose = (e)=>{
+      console.log("[ChatPollStudio] WebSocket geschlossen. Code:", e.code, "Grund:", e.reason);
+      statusLine.textContent = "Verbindung getrennt \u2014 versuche erneut zu verbinden\u2026";
+      reconnectAttempts++;
+      const delay = Math.min(30000, 1000 * Math.pow(2, Math.min(reconnectAttempts,5)));
+      console.log("[ChatPollStudio] Neuer Verbindungsversuch in "+Math.round(delay/1000)+"s (Versuch #"+reconnectAttempts+")");
+      reconnectTimer = setTimeout(()=>{ connectTwitch(); }, delay);
+    };
   }
 
   function beginLivePoll(){
